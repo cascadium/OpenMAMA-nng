@@ -79,7 +79,9 @@ typedef struct nngTransportBridge_
     mamaTransport           mTransport;
     msgBridge               mMsg;
     nng_socket              mNngSocketSubscriber;
+    nng_dialer              mNngDialerSubscriber;
     nng_socket              mNngSocketPublisher;
+    nng_listener            mNngListenerPublisher;
     void*                   mNngSocketDispatcher;
     const char*             mIncomingAddress[NNG_MAX_INCOMING_URIS];
     const char*             mOutgoingAddress[NNG_MAX_OUTGOING_URIS];

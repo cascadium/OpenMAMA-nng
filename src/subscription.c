@@ -75,7 +75,7 @@ nngBridgeMamaSubscription_create (subscriptionBridge* subscriber,
     if (MAMA_STATUS_OK != status || NULL == transport)
     {
         mama_log (MAMA_LOG_LEVEL_ERROR,
-                "nngBridgeMamaSubscription_create(): something NULL");
+                "nngBridgeMamaSubscription_create(): cannot acquire bridge transport");
         return MAMA_STATUS_NULL_ARG;
     }
 

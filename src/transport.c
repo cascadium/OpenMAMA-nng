@@ -420,15 +420,16 @@ nngBridgeMamaTransportImpl_start (nngTransportBridge* impl)
     nng_pub0_open(&impl->mNngSocketPublisher);
     nng_sub0_open(&impl->mNngSocketSubscriber);
 
-    nng_dialer dialler;
-    nng_listener listener;
-
     if (strcmp(impl->mName, "sub") == 0) {
-        nng_dialer_create(&dialler, impl->mNngSocketSubscriber, "tcp://127.0.0.1:4545");
-        nng_listener_create(&listener, impl->mNngSocketPublisher, "tcp://127.0.0.1:4546");
+        nng_setopt_ms(impl->mNngSocketSubscriber, NNG_OPT_RECVTIMEO, 100);
+        nng_setopt_ms(impl->mNngSocketSubscriber, NNG_OPT_SENDTIMEO, 100);
+        nng_dialer_create(&impl->mNngDialerSubscriber, impl->mNngSocketSubscriber, "tcp://127.0.0.1:4545");
+        nng_listener_create(&impl->mNngListenerPublisher, impl->mNngSocketPublisher, "tcp://127.0.0.1:4546");
     } else {
-        nng_dialer_create(&dialler, impl->mNngSocketSubscriber, "tcp://127.0.0.1:4546");
-        nng_listener_create(&listener, impl->mNngSocketPublisher, "tcp://127.0.0.1:4545");
+        nng_setopt_ms(impl->mNngSocketSubscriber, NNG_OPT_RECVTIMEO, 100);
+        nng_setopt_ms(impl->mNngSocketSubscriber, NNG_OPT_SENDTIMEO, 100);
+        nng_dialer_create(&impl->mNngDialerSubscriber, impl->mNngSocketSubscriber, "tcp://127.0.0.1:4546");
+        nng_listener_create(&impl->mNngListenerPublisher, impl->mNngSocketPublisher, "tcp://127.0.0.1:4545");
     }
 
     /* Set the transport bridge mIsDispatching to true. */
@@ -446,8 +447,8 @@ nngBridgeMamaTransportImpl_start (nngTransportBridge* impl)
         return MAMA_STATUS_PLATFORM;
     }
 
-    nng_dialer_start(dialler, NNG_FLAG_NONBLOCK);
-    nng_listener_start(listener, NNG_FLAG_NONBLOCK);
+    nng_dialer_start(impl->mNngDialerSubscriber, NNG_FLAG_NONBLOCK);
+    nng_listener_start(impl->mNngListenerPublisher, NNG_FLAG_NONBLOCK);
 
     return MAMA_STATUS_OK;
 }
@@ -470,6 +471,11 @@ mama_status nngBridgeMamaTransportImpl_stop (nngTransportBridge* impl)
 
     wthread_join (impl->mOmnngDispatchThread, NULL);
     status = impl->mOmnngDispatchStatus;
+
+    nng_listener_close(impl->mNngListenerPublisher);
+    nng_dialer_close(impl->mNngDialerSubscriber);
+    nng_close(impl->mNngSocketPublisher);
+    nng_close(impl->mNngSocketSubscriber);
 
     mama_log (MAMA_LOG_LEVEL_FINEST, "nngBridgeMamaTransportImpl_stop(): "
                       "Rejoined with status: %s.",
@@ -665,20 +671,21 @@ void* nngBridgeMamaTransportImpl_dispatchThread (void* closure)
     {
         int      rv;
         nng_msg *nmsg;
-
+        mama_log(MAMA_LOG_LEVEL_ERROR, "mIsDispatching = [%u]; Receiving message", impl->mIsDispatching);
         rv = nng_recvmsg(impl->mNngSocketSubscriber, &nmsg, 0);
+        mama_log(MAMA_LOG_LEVEL_ERROR, "mIsDispatching = [%u]; Received... something", impl->mIsDispatching);
         switch (rv) {
             case NNG_ETIMEDOUT:
             case NNG_ESTATE:
                 // Either a regular timeout, or we reached the
                 // end of an event like a survey completing.
-                return NULL;
+                continue;
             case 0:
                 mama_log(MAMA_LOG_LEVEL_FINEST, "Received message [%s]", nng_strerror(rv));
                 break;
             default:
                 mama_log(MAMA_LOG_LEVEL_ERROR, "Receive error: %s", nng_strerror(rv));
-                break;
+                continue;
         }
 
         void* data = nng_msg_body(nmsg);
