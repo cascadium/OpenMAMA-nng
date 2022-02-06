@@ -65,6 +65,8 @@ set(BUILD_GTEST ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+set(NNG_TESTS OFF CACHE BOOL "" FORCE)
+set(NNG_TOOLS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     nng
     GIT_REPOSITORY https://github.com/nanomsg/nng.git
