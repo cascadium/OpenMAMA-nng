@@ -5,6 +5,8 @@ project (OpenMAMA-nng)
 include(GoogleTest)
 enable_testing()
 
+set(CMAKE_CXX_STANDARD 11)
+
 if(UNIX)
     if(MAMA_ROOT)
         set(DEFAULT_INSTALL_PREFIX $MAMA_ROOT/lib)
