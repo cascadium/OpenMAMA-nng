@@ -64,6 +64,14 @@ set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 set(BUILD_GTEST ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    nng
+    GIT_REPOSITORY https://github.com/nanomsg/nng.git
+    GIT_TAG         v1.5.2
+)
+FetchContent_MakeAvailable(nng)
+
 include_directories(${MAMA_ROOT}/include)
 include_directories(${openmama_SOURCE_DIR}/mama/c_cpp/src/gunittest/c)
 include_directories(${openmama_SOURCE_DIR}/mama/c_cpp/src/c)
