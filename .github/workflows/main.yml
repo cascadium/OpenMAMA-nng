@@ -10,6 +10,7 @@ jobs:
     container:
       image: ${{ matrix.image }}
     strategy:
+      fail-fast: false
       matrix:
         include:
          - image: openmama/openmama-dev:centos-7
@@ -103,8 +104,8 @@ jobs:
   windows-build:
     name: Build and Test for Windows
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-2016
